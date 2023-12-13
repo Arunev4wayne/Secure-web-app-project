@@ -19,30 +19,29 @@ def home():
 def admin():
     return render_template('admin.html')
 
-        @login_manager.user_loader
-        def load_user(user_id):
-            return User.query.get(int(user_id))
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-        @app.route('/admin', methods=['GET', 'POST'])
-        def admin():
-            form = LoginForm()
-            if form.validate_on_submit():
-                user = User.query.filter_by(username=form.username.data).first()
-                if user and user.password == form.password.data:
-                    login_user(user)
-                    return redirect(url_for('admin_dashboard'))
-            return render_template('admin.html', form=form)
+@app.route('/admin', methods=['GET', 'POST'])
+def admin_login():
+      form = LoginForm()
+      if form.validate_on_submit():
+          user = User.query.filter_by(username=form.username.data).first()
+          if user and user.password == form.password.data:
+              login_user(user)
+              return redirect(url_for('admin_dashboard'))
+      return render_template('admin.html', form=form)
+@app.route('/admin_dashboard')
+@login_required
+def admin_dashboard():
+      return render_template('admin_dashboard.html')
+@app.route('/logout')
+@login_required
+def logout():
+      logout_user()
+      return redirect(url_for('admin'))
 
-        @app.route('/admin_dashboard')
-        @login_required
-        def admin_dashboard():
-            return render_template('admin_dashboard.html')
-
-        @app.route('/logout')
-        @login_required
-        def logout():
-            logout_user()
-            return redirect(url_for('admin'))
 
 @app.route('/user_login', methods=['POST'])
 def user_login():
