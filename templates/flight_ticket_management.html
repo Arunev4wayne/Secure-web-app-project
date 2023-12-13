@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Ticket Management</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Flight Ticket Management</h2>
+        <form method="POST">
+            <div class="form-group">
+                <label for="flight_name">Flight Name:</label>
+                <input type="text" class="form-control" id="flight_name" placeholder="Enter Flight Name" name="flight_name">
+            </div>
+            <div class="form-group">
+                <label for="flight_number">Flight Number:</label>
+                <input type="text" class="form-control" id="flight_number" placeholder="Enter Flight Number" name="flight_number">
+            </div>
+            <div class="form-group">
+                <label for="departing_airport_name">Departing Airport Name:</label>
+                <input type="text" class="form-control" id="departing_airport_name" placeholder="Enter Departing Airport Name" name="departing_airport_name">
+            </div>
+            <div class="form-group">
+                <label for="departing_time">Departing Time:</label>
+                <input type="time" class="form-control" id="departing_time" placeholder="Enter Departing Time" name="departing_time">
+            </div>
+            <div class="form-group">
+                <label for="arrival_airport_name">Arrival Airport Name:</label>
+                <input type="text" class="form-control" id="arrival_airport_name" placeholder="Enter Arrival Airport Name" name="arrival_airport_name">
+            </div>
+            <div class="form-group">
+                <label for="arrival_time">Arrival Time:</label>
+                <input type="time" class="form-control" id="arrival_time" placeholder="Enter Arrival Time" name="arrival_time">
+            </div>
+            <div class="form-group">
+                <label for="flight_status">Flight Status:</label>
+                <input type="text" class="form-control" id="flight_status" placeholder="Enter Flight Status" name="flight_status">
+            </div>
+            <button type="submit" class="btn btn-primary">Add Flight</button>
+        </form>
+        <br>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Flight Name</th>
+                    <th>Flight Number</th>
+                    <th>Departing Airport Name</th>
+                    <th>Departing Time</th>
+                    <th>Arrival Airport Name</th>
+                    <th>Arrival Time</th>
+                    <th>Flight Status</th>
+                    <th>Modify</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for flight in flights %}
+                <tr>
+                    <td>{{ flight.id }}</td>
+                    <td>{{ flight.flight_name }}</td>
+                    <td>{{ flight.flight_number }}</td>
+                    <td>{{ flight.departing_airport_name }}</td>
+                    <td>{{ flight.departing_time }}</td>
+                    <td>
+                      <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#updateFlightModal{{ flight.id }}">
+                          Update
+                      </button>
+                      <button type="button" class="btn btn-danger" data-toggle="modal" data-target="#deleteFlightModal{{ flight.id }}">
+                          Delete
+                      </button>
+                  </td>
+                </tr>
+
+                {% endfor %}
+              <tbody>
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

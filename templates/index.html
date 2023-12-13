@@ -1,0 +1,46 @@
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    {% include 'bootstrap.html' %}
+  </head>
+  <body>
+      <header>
+          <nav>
+              <ul>
+                  <li><a href="#">Home</a></li>
+                  <li><a href="#">Bookings</a></li>
+                  <li><a href="#">About</a></li>
+                  <li><a href="#">Contact</a></li>
+                  <li><a href="{{ url_for('admin') }}">Admin</a></li>
+              </ul>
+          </nav>
+      </header>
+      <main>
+          <section>
+              <h2>Register</h2>
+              <form>
+                  <label for="reg_username">Username:</label>
+                  <input type="text" id="reg_username" name="reg_username">
+                  <label for="reg_email">Email:</label>
+                  <input type="email" id="reg_email" name="reg_email">
+                  <label for="reg_password">Password:</label>
+                  <input type="password" id="reg_password" name="reg_password">
+                  <button type="submit">Register</button>
+              </form>
+          </section>
+          <section>
+              <h2>Login</h2>
+            <form action="/user_login" method="post">
+                  <label for="login_username">Username:</label>
+                  <input type="text" id="login_username" name="login_username" required>
+                  <label for="login_password">Password:</label>
+                  <input type="password" id="login_password" name="login_password" required>
+                  <button type="submit">Login</button>
+              </form>
+          </section>
+      </main>
+      <footer>
+          <p>&copy; 2022 Travel Booking System</p>
+      </footer>
+  </body>
+  </html>

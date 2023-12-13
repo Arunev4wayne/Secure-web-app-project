@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <style>
+    .navbar {
+        overflow: hidden;
+        background-color: #333;
+    }
+
+    .navbar a {
+        float: right;
+        display: block;
+        color: #f2f2f2;
+        text-align: center;
+        padding: 14px 16px;
+        text-decoration: none;
+    }
+
+    .navbar a:hover {
+        background: #ddd;
+        color: black;
+    }
+  </style>
+  </head>
+  <body>
+  <div class="navbar">
+    <a href=#>User Profile</a>
+  </div>
+    <div class="container">
+        <h2>User Dashboard</h2>
+        <h3>Book Flight Ticket</h3>
+        <form method="POST">
+            <!-- include your book flight form code here -->
+        </form>
+        <h3>Check Booking Status</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Flight Name</th>
+                    <th>Flight Number</th>
+                    <th>Departing Airport Name</th>
+                    <th>Departing Time</th>
+                    <th>Arrival Airport Name</th>
+                    <th>Arrival Time</th>
+                    <th>Flight Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for booking in bookings %}
+                <tr>
+                    <td>{{ booking.id }}</td>
+                    <td>{{ booking.flight_name }}</td>
+                    <td>{{ booking.flight_number }}</td>
+                    <td>{{ booking.departing_airport_name }}</td>
+                    <td>{{ booking.departing_time }}</td>
+                    <td>{{ booking.arrival_airport_name }}</td>
+                    <td>{{ booking.arrival_time }}</td>
+                    <td>{{ booking.flight_status }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

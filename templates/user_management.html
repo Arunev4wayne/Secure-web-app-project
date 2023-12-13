@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <title>User Management</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>User Management</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>User Name</th>
+                <th>Age</th>
+                <th>DOB</th>
+                <th>Phone Number</th>
+                <th>Booking Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.user_name }}</td>
+                <td>{{ user.age }}</td>
+                <td>{{ user.dob }}</td>
+                <td>{{ user.phone_number }}</td>
+                <td>{{ user.booking_status }}</td>
+                <td>
+                    <a href="#">Update</a>
+                    <a href="#">Delete</a>
+                    <a href="#">Cancel</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
