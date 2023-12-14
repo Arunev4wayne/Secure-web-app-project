@@ -6,8 +6,8 @@ app = Flask(__name__)
 # Replace these values with your MySQL database credentials
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': '81h0m0e7c2mtn1v9xg1y',
-    'password': 'pscale_pw_fWucLL8vsPcpzS6JrpOmmwrcV06GT2QdKWEcjMe0xBI',
+    'user': '2dnw9w781wzyobwgzs3j',
+    'password': 'pscale_pw_ExQmCQ9Vagz0QcyY2eBX8L64AV7OeNw0J6mj3YVASFC',
     'database': 'swd',
 }
 
