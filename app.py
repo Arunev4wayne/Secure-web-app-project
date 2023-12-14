@@ -71,7 +71,7 @@ def admin_login():
                 # Successful login, you may want to store user session here
                 cursor.close()
                 connection.close()
-                return redirect(url_for('admin_dashboard.html'))  # Redirect to admin dashboard page on success
+                return redirect(url_for('admin_dashboard'))  # Redirect to admin dashboard page on success
             else:
                 return "Invalid email or password."
 
