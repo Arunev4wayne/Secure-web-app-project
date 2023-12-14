@@ -1,64 +1,81 @@
-from flask import Flask, render_template, redirect, url_for
-from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required
-from models import db, User
-from forms import LoginForm
+import mysql.connector
+from flask import Flask, redirect, render_template, request, url_for
 
 app = Flask(__name__)
-app.config.from_object('config')
-db.init_app(app)
 
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = 'admin'
+# Replace these values with your MySQL database credentials
+db_config = {
+    'host': 'aws.connect.psdb.cloud',
+    'user': 'g5tl71xefoqn5g0yup87',
+    'password': 'pscale_pw_5Knhle7RHw7CKWxMrH0mMsdOEM2KS81ofhDohcIlHxt',
+    'database': 'swd',
+}
 
-@app.route('/')
-def home():
-    return render_template('index.html')
+@app.route('/admin/signup', methods=['GET', 'POST'])
+def admin_signup():
+    if request.method == 'POST':
+        # Retrieve form data
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
 
-@app.route('/admin')
-def admin():
-    return render_template('admin.html')
+        # Connect to MySQL database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
 
-@login_manager.user_loader
-def load_user(user_id):
-    return User.query.get(int(user_id))
+        # Insert data into the admin table (replace 'admin' with your actual table name)
+        insert_query = (
+            "INSERT INTO admin (name, password, email) "
+            "VALUES (%s, %s, %s)"
+        )
+        values = (username, password, email)
 
-@app.route('/admin', methods=['GET', 'POST'])
+        try:
+            cursor.execute(insert_query, values)
+            connection.commit()
+            cursor.close()
+            connection.close()
+            return redirect(url_for('admin.html'))  # Redirect to admin login page on success
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            connection.rollback()
+            return "Error occurred during registration."
+
+    return render_template('admin_signup.html')
+
+
+@app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-      form = LoginForm()
-      if form.validate_on_submit():
-          user = User.query.filter_by(username=form.username.data).first()
-          if user and user.password == form.password.data:
-              login_user(user)
-              return redirect(url_for('admin_dashboard'))
-      return render_template('admin.html', form=form)
-@app.route('/admin_dashboard')
-@login_required
-def admin_dashboard():
-      return render_template('admin_dashboard.html')
-@app.route('/logout')
-@login_required
-def logout():
-      logout_user()
-      return redirect(url_for('admin'))
+    if request.method == 'POST':
+        # Retrieve form data
+        email = request.form['email']
+        password = request.form['password']
 
+        # Connect to MySQL database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
 
-@app.route('/user_login', methods=['POST'])
-def user_login():
-    username = request.form['login_username']
-    password = request.form['login_password']
-    if username == 'user' and password == 'password':
-        return render_template('user_dashboard.html')
-    else:
-        return redirect(url_for('home'))
+        # Check login credentials (replace 'admin' with your actual table name)
+        select_query = "SELECT * FROM admin WHERE email = %s AND password = %s"
+        values = (email, password)
 
-@app.route('/user_management')
-def user_management():
-    return render_template('user_management.html')
+        try:
+            cursor.execute(select_query, values)
+            result = cursor.fetchone()
 
-@app.route('/flight_ticket_management')
-def flight_ticket_management():
-    return render_template('flight_ticket_management.html')
+            if result:
+                # Successful login, you may want to store user session here
+                cursor.close()
+                connection.close()
+                return render_template('admin_dashboard.html')  # Redirect to admin dashboard page on success
+            else:
+                return "Invalid email or password."
+
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            return "Error occurred during login."
+
+    return render_template('admin_login.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+   app.run(debug=True, host='0.0.0.0')
