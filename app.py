@@ -6,10 +6,14 @@ app = Flask(__name__)
 # Replace these values with your MySQL database credentials
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': 'g5tl71xefoqn5g0yup87',
-    'password': 'pscale_pw_5Knhle7RHw7CKWxMrH0mMsdOEM2KS81ofhDohcIlHxt',
+    'user': '81h0m0e7c2mtn1v9xg1y',
+    'password': 'pscale_pw_fWucLL8vsPcpzS6JrpOmmwrcV06GT2QdKWEcjMe0xBI',
     'database': 'swd',
 }
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 @app.route('/admin/signup', methods=['GET', 'POST'])
 def admin_signup():
@@ -35,7 +39,7 @@ def admin_signup():
             connection.commit()
             cursor.close()
             connection.close()
-            return redirect(url_for('admin.html'))  # Redirect to admin login page on success
+            return redirect(url_for('admin_login.html'))  # Redirect to admin login page on success
         except mysql.connector.Error as err:
             print(f"Error: {err}")
             connection.rollback()
@@ -67,7 +71,7 @@ def admin_login():
                 # Successful login, you may want to store user session here
                 cursor.close()
                 connection.close()
-                return render_template('admin_dashboard.html')  # Redirect to admin dashboard page on success
+                return redirect(url_for('admin_dashboard.html'))  # Redirect to admin dashboard page on success
             else:
                 return "Invalid email or password."
 
@@ -76,6 +80,10 @@ def admin_login():
             return "Error occurred during login."
 
     return render_template('admin_login.html')
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    return render_template('admin_dashboard.html')
 
 if __name__ == '__main__':
    app.run(debug=True, host='0.0.0.0')
