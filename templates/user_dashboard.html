@@ -33,6 +33,9 @@
   <div class="navbar">
     <a href=#>User Profile</a>
   </div>
+    <div>
+        <p>User ID: {{ session['user_id'] }}</p>
+    </div>
     <div class="container">
         <h2>User Dashboard</h2>
         <h3>Book Flight Ticket</h3>
@@ -40,34 +43,31 @@
             <!-- include your book flight form code here -->
         </form>
         <h3>Check Booking Status</h3>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Flight Name</th>
-                    <th>Flight Number</th>
-                    <th>Departing Airport Name</th>
-                    <th>Departing Time</th>
-                    <th>Arrival Airport Name</th>
-                    <th>Arrival Time</th>
-                    <th>Flight Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for booking in bookings %}
-                <tr>
-                    <td>{{ booking.id }}</td>
-                    <td>{{ booking.flight_name }}</td>
-                    <td>{{ booking.flight_number }}</td>
-                    <td>{{ booking.departing_airport_name }}</td>
-                    <td>{{ booking.departing_time }}</td>
-                    <td>{{ booking.arrival_airport_name }}</td>
-                    <td>{{ booking.arrival_time }}</td>
-                    <td>{{ booking.flight_status }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+      <table border="1" id="flightTable">
+        <tr>
+            <th>ID</th>
+            <th>Flight Name</th>
+            <th>Flight Number</th>
+            <th>Origin</th>
+            <th>Destination</th>
+            <th>Flight Status</th>
+            <th>Action</th>
+        </tr>
+        <!-- Example row with buttons -->
+      {% for flight in flights %}
+              <tr>
+                  <td>{{ flight.id }}</td>
+                  <td>{{ flight.flightName }}</td>
+                  <td>{{ flight.flightNumber }}</td>
+                  <td>{{ flight.origin }}</td>
+                  <td>{{ flight.destination }}</td>
+                  <td>{{ flight.flightStatus }}</td>
+                  <td>
+                    <a href="{{ url_for('update_flight', id=flight.id) }}">Book Ticket</a>
+                  </td>
+              </tr>
+          {% endfor %}
+      </table>
     </div>
 </body>
 </html>

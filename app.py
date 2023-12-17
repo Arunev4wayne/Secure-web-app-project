@@ -1,20 +1,17 @@
 import mysql.connector
-from flask import Flask, jsonify, redirect, render_template, request, url_for
-from flask_login import (
-  LoginManager,
-  current_user,
-  login_required,
-  login_user,
-  logout_user,
-)
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+
+from flask_session import Session
 
 app = Flask(__name__)
-
+app.config['SECRET_KEY'] = 'mysecretkey'
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
 # Replace these values with your MySQL database credentials
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': 'jxgamgetff40vxl35xlc',
-    'password': 'pscale_pw_goa4iL3VRDLNARYHGJwNG48BavBSYfSYIQOLbvrq5xm',
+    'user': 'ao4g1phz4hwu4vpt0bbm',
+    'password': 'pscale_pw_Gwdnyau2Zpmq9ag4QqcpVe3hxIQJenWc2zBD4OtgPqe',
     'database': 'swd',
 }
 
@@ -249,9 +246,10 @@ def user_login():
 
         # Connect to MySQL database
         connection = mysql.connector.connect(**db_config)
-        cursor = connection.cursor()
+        # Create cursor with dictionary=True to get column names as keys in the result
+        cursor = connection.cursor(dictionary=True)
 
-        # Check login credentials (replace 'admin' with your actual table name)
+        # Check login credentials
         select_query = "SELECT * FROM users WHERE email = %s AND password = %s"
         values = (email, password)
 
@@ -260,23 +258,26 @@ def user_login():
             result = cursor.fetchone()
 
             if result:
-                # Successful login, you may want to store user session here
+                # Use 'id' as a key to get user ID
+                session['user_id'] = result['id']
                 cursor.close()
                 connection.close()
-                return redirect(url_for('user_dashboard'))  # Redirect to admin dashboard page on success
+                return redirect(url_for('user_dashboard'))  # Redirect to user dashboard page on success
             else:
                 return "Invalid email or password."
 
         except mysql.connector.Error as err:
             print(f"Error: {err}")
             return "Error occurred during login."
-
     return render_template('index.html')
+
+
+
 
 @app.route('/get_user_details/<int:id>', methods=['GET'])
 def get_user_details(id):
-    user_query = f"SELECT * FROM users WHERE id = {id}"
-    user = execute_query(user_query)
+    user_query = "SELECT * FROM users WHERE id = %s"
+    user = execute_query(user_query, (id,))
 
     # Assuming only one result is expected
     if user:
@@ -332,8 +333,8 @@ def add_flight():
 
 @app.route('/get_flight_details/<int:flight_id>', methods=['GET'])
 def get_flight_details(flight_id):
-    flight_query = f"SELECT * FROM flights WHERE flight_id = {flight_id}"
-    flight = execute_query(flight_query)
+    flight_query = "SELECT * FROM flights WHERE flight_id = %s}"
+    flight = execute_query(flight_query, (flight_id,))
 
     # Assuming only one result is expected
     if flight:
@@ -348,7 +349,12 @@ def flight_ticket_management_display():
 
     return render_template('flight_ticket_management.html', flights=flights)
 
+@app.route('/user_dashboard')
+def flight_display():
+    flights_query = "SELECT * FROM flights"
+    flights = execute_query(flights_query)
 
+    return render_template('user_dashboard.html', flights=flights)
 
 @app.route('/update_flight/<int:id>', methods=['GET', 'POST'])
 def update_flight(id):
