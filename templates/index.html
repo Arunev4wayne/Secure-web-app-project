@@ -18,24 +18,24 @@
       <main>
           <section>
               <h2>Register</h2>
-              <form>
+              <form method="post" >
                   <label for="reg_username">Username:</label>
-                  <input type="text" id="reg_username" name="reg_username">
-                  <label for="reg_email">Email:</label>
-                  <input type="email" id="reg_email" name="reg_email">
-                  <label for="reg_password">Password:</label>
-                  <input type="password" id="reg_password" name="reg_password">
-                  <button type="submit">Register</button>
+                  <input type="text" id="username" name="username">
+                  <label for="email">Email:</label>
+                  <input type="email" id="email" name="email">
+                  <label for="password">Password:</label>
+                  <input type="password" id="password" name="password">
+                <input type="submit" value="Register">
               </form>
           </section>
           <section>
               <h2>Login</h2>
-            <form action="/user_login" method="post">
-                  <label for="login_username">Username:</label>
-                  <input type="text" id="login_username" name="login_username" required>
-                  <label for="login_password">Password:</label>
-                  <input type="password" id="login_password" name="login_password" required>
-                  <button type="submit">Login</button>
+            <form method="post" action="{{ url_for('user_login') }}">
+                  <label for="email">E-mail:</label>
+                  <input type="text" id="email" name="email" required>
+                  <label for="password">Password:</label>
+                  <input type="password" id="password" name="password" required>
+               <input type="submit" value="Login">
               </form>
           </section>
       </main>

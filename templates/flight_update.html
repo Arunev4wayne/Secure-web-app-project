@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Flight Details</title>
+</head>
+<body>
+
+<h1>Update Flight Details</h1>
+
+<!-- Flight Details Update Form -->
+<form id="update_flight" action="{{ url_for('update_flight', id=id) }}" method="post">
+    <label for="flightName">Flight Name:</label>
+    <input type="text" id="flightName" name="flightName" value="{{ flight.flightName }}" required><br>
+
+    <label for="flightNumber">Flight Number:</label>
+    <input type="text" id="flightNumber" name="flightNumber" value="{{ flight.flightNumber }}" required><br>
+
+    <label for="origin">Origin:</label>
+    <input type="text" id="origin" name="origin" value="{{ flight.origin }}" required><br>
+
+    <label for="destination">Destination:</label>
+    <input type="text" id="destination" name="destination" value="{{ flight.destination }}" required><br>
+
+    <label for="status">Flight Status:</label>
+    <input type="text" id="status" name="status" value="{{ flight.flightStatus }}" required><br>
+
+    <!-- Click the button to update the flight details -->
+    <button type="submit">Update Flight</button>
+</form>
+
+<!-- JavaScript functions or additional logic can be added as needed -->
+
+</body>
+</html>

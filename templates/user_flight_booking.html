@@ -4,31 +4,12 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Flight Management</title>
+    <title>Flight Boooking</title>
 </head>
 <body>
 
-<h1>Flight Management System</h1>
+<h1>Flight Booking {% for user in users %} {{ user.id }}</h1>
 
-<!-- Flight Details Form -->
-<form id="flightForm"  action="{{ url_for('add_flight') }}" method="post">
-    <label for="flightName">Flight Name:</label>
-    <input type="text" id="flight_ame" name="flightName" required><br>
-
-    <label for="flightNumber">Flight Number:</label>
-    <input type="text" id="flightNumber" name="flightNumber" required><br>
-
-    <label for="origin">Origin:</label>
-    <input type="text" id="origin" name="origin" required><br>
-
-    <label for="destination">Destination:</label>
-    <input type="text" id="destination" name="destination" required><br>
-
-    <label for="status">Flight Status:</label>
-    <input type="text" id="flightStatus" name="flightStatus" required><br>
-
-    <input type="submit" value="Add">
-</form>
 
 <!-- Flight Information Table -->
   <table border="1" id="flightTable">
@@ -51,9 +32,7 @@
                 <td>{{ flight.destination }}</td>
                 <td>{{ flight.flightStatus }}</td>
                 <td>
-                  <a href="{{ url_for('update_flight', id=flight.id) }}">Update</a>
-                  <form action="{{ url_for('delete_flight', id=flight.id) }}" method="POST">
-                  <input type="submit" value="Delete"></form>
+                  <a href="{{ url_for('update_flight', id=flight.id) }}">Book Ticket</a>
                 </td>
             </tr>
         {% endfor %}
