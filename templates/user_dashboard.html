@@ -33,10 +33,9 @@
   <div class="navbar">
     <a href=#>User Profile</a>
   </div>
-    <div>
-        <p>User ID: {{ session['user_id'] }}</p>
-    </div>
+
     <div class="container">
+        <h2>{{ id }}</h2>
         <h2>User Dashboard</h2>
         <h3>Book Flight Ticket</h3>
         <form method="POST">
@@ -63,7 +62,11 @@
                   <td>{{ flight.destination }}</td>
                   <td>{{ flight.flightStatus }}</td>
                   <td>
-                    <a href="{{ url_for('update_flight', id=flight.id) }}">Book Ticket</a>
+                    <form method="POST">
+                        <input type="" name="flight_id" value="{{ flight.id }}">
+                        <input type="" name="user_id" value="{{ id }}">
+                        <button type="submit">Book Ticket</button>
+                    </form>
                   </td>
               </tr>
           {% endfor %}
