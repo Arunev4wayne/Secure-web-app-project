@@ -5,8 +5,8 @@ app = Flask(__name__)
 # Replace these values with your MySQL database credentials
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': 'yuwm650qrndw0k3o12ow',
-    'password': 'pscale_pw_WQ4NW0Ge1mqBEhn2erMtzcAW0BkSxESu9xsFRQFeAXg',
+    'user': '78k2yletx4ytveb76xpa',
+    'password': 'pscale_pw_rwqmkXW2EWlDsjHFbPXZXmjbeuGu88O8VbaE4YOpWEC',
     'database': 'swd',
 }
 
@@ -267,7 +267,7 @@ def user_login():
         cursor.close()
         connection.close()
         return redirect(url_for(
-            'user_dashboard', id=id))  # Redirect to admin dashboard page on success
+            'user_dashboard',id=id))  # Redirect to admin dashboard page on success
       else:
         return "Invalid email or password."
 
@@ -358,7 +358,7 @@ def flight_ticket_management_display():
   return render_template('flight_ticket_management.html', flights=flights)
 
 
-@app.route('/user_dashboard')
+@app.route('/flight_ticket_management')
 def flight_display():
   flights_query = "SELECT * FROM flights"
   flights = execute_query(flights_query)
