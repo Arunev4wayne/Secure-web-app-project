@@ -4,13 +4,13 @@ from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.secret_key = 'secretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://xzreem7bjqv4lcwypfmx:pscale_pw_bT6bPtxEZciboQzXDL3wupQx5qWTYM2iXifjXWvr9SC@aws.connect.psdb.cloud:3306/swd'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://4imgpmiflc464crr6yhl:pscale_pw_x0cWVXm5b8KxKTXwM05AMQkoELQmUzX7MWO6HpNTuMm@aws.connect.psdb.cloud:3306/swd'
 app.config['SQLALCHEMY_POOL_SIZE'] = 10  # Adjust based on your requirements
 db = SQLAlchemy(app)
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': 'xzreem7bjqv4lcwypfmx',
-    'password': 'pscale_pw_bT6bPtxEZciboQzXDL3wupQx5qWTYM2iXifjXWvr9SC',
+    'user': '4imgpmiflc464crr6yhl',
+    'password': 'pscale_pw_x0cWVXm5b8KxKTXwM05AMQkoELQmUzX7MWO6HpNTuMm',
     'database': 'swd',
 }
 

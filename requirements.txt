@@ -3,3 +3,4 @@ gunicorn
 sqlalchemy
 pymysql
 mysql-connector-python
+flask_sqlalchemy
