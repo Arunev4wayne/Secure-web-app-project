@@ -1,16 +1,13 @@
 import mysql.connector
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
-from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
 app.secret_key = 'secretkey'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+mysqlconnector://4imgpmiflc464crr6yhl:pscale_pw_x0cWVXm5b8KxKTXwM05AMQkoELQmUzX7MWO6HpNTuMm@aws.connect.psdb.cloud:3306/swd'
-app.config['SQLALCHEMY_POOL_SIZE'] = 10  # Adjust based on your requirements
-db = SQLAlchemy(app)
+
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': '4imgpmiflc464crr6yhl',
-    'password': 'pscale_pw_x0cWVXm5b8KxKTXwM05AMQkoELQmUzX7MWO6HpNTuMm',
+    'user': 'bp8jj0lq3uyxts2bb3o1',
+    'password': 'pscale_pw_6bTIFKXUCjNUUrqpEdeyeGP0IKTZNt0CvNTdtaHKq9X',
     'database': 'swd',
 }
 
