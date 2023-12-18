@@ -6,8 +6,8 @@ app.secret_key = 'secretkey'
 # Replace these values with your MySQL database credentials
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': 'mf308dkapvdex7uap0gu',
-    'password': 'pscale_pw_7wqIUkuiO890thVEyCMomFXaIL94vkz6HaK4pf7NFYU',
+    'user': 'y6vffdji7h0zfbtwlrrn',
+    'password': 'pscale_pw_SZye3uogT6O0cQQVa4500fLfSTex8O3r9BuD5dKqlai',
     'database': 'swd',
 }
 
