@@ -6,8 +6,8 @@ app.secret_key = 'secretkey'
 
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': 'bp8jj0lq3uyxts2bb3o1',
-    'password': 'pscale_pw_6bTIFKXUCjNUUrqpEdeyeGP0IKTZNt0CvNTdtaHKq9X',
+    'user': '2coiltgxc43qne0dxs88',
+    'password': 'pscale_pw_rW29zVrsv2FI74y4d67xIJDBApSS2MsWpQwA099XMCA',
     'database': 'swd',
 }
 
