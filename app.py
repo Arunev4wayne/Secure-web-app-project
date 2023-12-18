@@ -1,12 +1,13 @@
 import mysql.connector
-from flask import Flask, jsonify, redirect, render_template, request, url_for
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
 
 app = Flask(__name__)
+app.secret_key = 'secretkey'
 # Replace these values with your MySQL database credentials
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': '78k2yletx4ytveb76xpa',
-    'password': 'pscale_pw_rwqmkXW2EWlDsjHFbPXZXmjbeuGu88O8VbaE4YOpWEC',
+    'user': 'zclzt4hy0kaxz9hpmzko',
+    'password': 'pscale_pw_uMZzzmcgOsrOM1gdhgkv2rmAdXNFLNSnwvTbgbkOWqz',
     'database': 'swd',
 }
 
@@ -254,7 +255,7 @@ def user_login():
     cursor = connection.cursor()
 
     # Check login credentials (replace 'admin' with your actual table name)
-    select_query = "SELECT id FROM users WHERE email = %s AND password = %s"
+    select_query = "SELECT username, id, email FROM users WHERE email = %s AND password = %s"
     values = (email, password)
 
     try:
@@ -262,12 +263,16 @@ def user_login():
       result = cursor.fetchone()
 
       if result:
-        # Successful login, you may want to store user session here
-        id = result[0]
+        session['id'] = result[1]
+        session['username'] = result[0]
+        session['email'] = result[2]
+        id = result[1]
+        username = result[0]
+        email = result[2]
         cursor.close()
         connection.close()
         return redirect(url_for(
-            'user_dashboard',id=id))  # Redirect to admin dashboard page on success
+            'user_dashboard',id=id, username=username, email=email))  # Redirect to admin dashboard page on success
       else:
         return "Invalid email or password."
 
@@ -358,12 +363,56 @@ def flight_ticket_management_display():
   return render_template('flight_ticket_management.html', flights=flights)
 
 
-@app.route('/flight_ticket_management')
+@app.route('/user_dashboard/')
 def flight_display():
-  flights_query = "SELECT * FROM flights"
-  flights = execute_query(flights_query)
+    # Retrieve user ID from session
+    user_id = session.get('id')
+    user_name = session.get('username')
+    user_email = session.get('email')
 
-  return render_template('user_dashboard.html', flights=flights)
+    if user_id is not None:
+        # Connect to MySQL database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        # Query flights from the database
+        flights_query = "SELECT * FROM flights"
+        flights = execute_query(flights_query)
+
+        # Close the database connection
+        cursor.close()
+        connection.close()
+
+        # Render the template with the flights data
+        return render_template('user_dashboard.html', flights=flights, user_id=user_id, user_name=user_name, user_email=user_email)
+    else:
+        # Redirect to login if user ID is not in session
+        return redirect(url_for('user_login'))
+
+@app.route('/user_dashboard/')
+def ticket_display():
+    # Retrieve user ID from session
+    user_id = session.get('id')
+
+    if user_id is not None:
+        # Connect to MySQL database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor(dictionary=True)
+
+        # Query booked flight tickets for the user
+        tickets_query = "SELECT * FROM ticket_bookings WHERE user_id = %s"
+        cursor.execute(tickets_query, (user_id,))
+        tickets = cursor.fetchall()
+
+        # Close the database connection
+        cursor.close()
+        connection.close()
+
+        # Render the template with the booked flight tickets data
+        return render_template('booked_tickets.html', tickets=tickets, user_id=user_id)
+    else:
+        # Redirect to login if user ID is not in session
+        return redirect(url_for('user_login'))
 
 
 @app.route('/update_flight/<int:id>', methods=['GET', 'POST'])
@@ -441,6 +490,152 @@ def delete_flight(id):
     connection.rollback()
     return "Error occurred during flight deletion."
 
+@app.route('/user/book_ticket', methods=['GET', 'POST'])
+def book_ticket():
+  if request.method == 'POST':
+    # Retrieve form data
+    user_id = request.form['user_id']
+    user_name = request.form['user_name']
+    user_email = request.form['user_email']
+    flight_id = request.form['flight_id']
+    flight_name = request.form['flight_name']
+    flight_number = request.form['flight_number']
+    flight_origin = request.form['origin']
+    flight_destination = request.form['destination']
+    flight_status = request.form['flight_status']
+    ticket_status = request.form['ticket_status']
+
+    # Connect to MySQL database
+    connection = mysql.connector.connect(**db_config)
+    cursor = connection.cursor()
+
+    # Insert data into the admin table (replace 'admin' with your actual table name)
+    insert_query = ("INSERT INTO ticket_bookings (user_id, user_name, user_email, flight_id, flight_name, flight_number, origin, destination, flight_status, ticket_status) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
+    values = (user_id, user_name, user_email, flight_id, flight_name, flight_number, flight_origin, flight_destination, flight_status, ticket_status)
+
+
+    try:
+      cursor.execute(insert_query, values)
+      connection.commit()
+      cursor.close()
+      connection.close()
+      return redirect(url_for(
+          'user_dashboard'))  # Redirect to admin login page on success
+    except mysql.connector.Error as err:
+      print(f"Error: {err}")
+      connection.rollback()
+      return "Error occurred during registration."
+
+  return render_template('user_dashboard.html')
+
+
+@app.route('/user/booked_tickets/<int:ticket_id>', methods=['GET', 'POST'])
+def cancel_ticket(ticket_id):
+  # Connect to MySQL database
+  connection = mysql.connector.connect(**db_config)
+  cursor = connection.cursor(dictionary=True)
+
+  if request.method == 'POST':
+    # Process form submission and update the ticket status in the database
+    ticket_status = request.form['ticket_status']
+
+    # Update the ticket status in the database
+    update_query = (
+        "UPDATE ticket_bookings SET ticket_status=%s WHERE id=%s"
+    )
+    values = (ticket_status, ticket_id,)  # Ensure the values are passed as a tuple
+
+    try:
+      # Pass the 'values' as a second argument which represents parameters for the placeholder in 'update_query'
+      cursor.execute(update_query, values)
+      connection.commit()
+      cursor.close()
+      connection.close()
+      return redirect(url_for('booked_tickets', user_id=session['id']))
+    except mysql.connector.Error as err:
+      print(f"Error: {err}")
+      connection.rollback()
+      cursor.close()
+      connection.close()
+      return "Error occurred during cancellation."
+
+  # If not a POST request or if the ticket is not found, redirect to the booked tickets view
+  return redirect(url_for('booked_tickets', user_id=session['id']))
+
+@app.route('/admin/booked_tickets/<int:ticket_id>', methods=['GET', 'POST'])
+def admin_cancel_ticket(ticket_id):
+  # Connect to MySQL database
+  connection = mysql.connector.connect(**db_config)
+  cursor = connection.cursor(dictionary=True)
+
+  if request.method == 'POST':
+    # Process form submission and update the ticket status in the database
+    ticket_status = request.form['ticket_status']
+
+    # Update the ticket status in the database
+    update_query = (
+        "UPDATE ticket_bookings SET ticket_status=%s WHERE id=%s"
+    )
+    values = (ticket_status, ticket_id,)  # Ensure the values are passed as a tuple
+
+    try:
+      # Pass the 'values' as a second argument which represents parameters for the placeholder in 'update_query'
+      cursor.execute(update_query, values)
+      connection.commit()
+      cursor.close()
+      connection.close()
+      return redirect(url_for('booked_tickets_admin'))
+    except mysql.connector.Error as err:
+      print(f"Error: {err}")
+      connection.rollback()
+      cursor.close()
+      connection.close()
+      return "Error occurred during cancellation."
+
+  # If not a POST request or if the ticket is not found, redirect to the booked tickets view
+  return redirect(url_for('booked_tickets_admin'))
+
+@app.route('/user/update_profile/<int:user_id>', methods=['GET', 'POST'])
+def update_profile(user_id):
+  # Connect to MySQL database
+  connection = mysql.connector.connect(**db_config)
+  cursor = connection.cursor(dictionary=True)
+
+  if request.method == 'POST':
+    # Process form submission and update the user status in the database
+    username = request.form['username']
+    email = request.form['email']
+    password = request.form['password']
+
+    # Update the user status in the database
+    update_query = "UPDATE users SET username=%s, email=%s, password=%s WHERE id=%s"
+    values = (username, email, password, user_id)
+
+    try:
+      cursor.execute(update_query, values)
+      connection.commit()
+    except mysql.connector.Error as err:
+      print(f"Error: {err}")
+      connection.rollback()
+    finally:
+      cursor.close()
+      connection.close()
+
+    return redirect(url_for('user_dashboard'))
+  else:
+    # Render user details for GET request
+    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+    cursor.close()
+    connection.close()
+
+    if user:
+      return render_template('update_profile.html', user=user, user_id=user_id)
+    else:
+      return "User not found", 404
+
+
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
@@ -466,6 +661,19 @@ def flight_ticket_management():
 def flight_update():
   return render_template('flight_update.html')
 
+@app.route('/booked_tickets/<int:user_id>')
+def booked_tickets(user_id):
+  tickets_query = "SELECT * FROM ticket_bookings WHERE user_id = %s"
+  tickets = execute_query(tickets_query, (user_id,))
+
+  return render_template('booked_tickets.html', user_id=user_id, tickets=tickets)
+
+@app.route('/booked_tickets_admin/')
+def booked_tickets_admin():
+  tickets_query = "SELECT * FROM ticket_bookings "
+  tickets = execute_query(tickets_query)
+
+  return render_template('booked_tickets_admin.html', tickets=tickets)
 
 if __name__ == '__main__':
   app.run(debug=True, host='0.0.0.0')

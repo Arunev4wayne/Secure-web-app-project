@@ -31,16 +31,19 @@
   </head>
   <body>
   <div class="navbar">
-    <a href=#>User Profile</a>
+    <a href="{{ url_for('update_profile', user_id=user_id) }}">Edit user Profile</a>
   </div>
 
     <div class="container">
+      <h1>Welcome to your dashboard, {{ user_name }}!</h1>
         <h2>User Dashboard</h2>
         <h3>Book Flight Ticket</h3>
         <form method="POST">
             <!-- include your book flight form code here -->
         </form>
-        <h3>Check Booking Status</h3>
+      <div class="navbar">
+          <a href="{{ url_for('booked_tickets', user_id=user_id) }}">Check Booked Flights</a>
+      </div>
       <table border="1" id="flightTable">
         <tr>
             <th>ID</th>
@@ -61,8 +64,17 @@
                   <td>{{ flight.destination }}</td>
                   <td>{{ flight.flightStatus }}</td>
                   <td>
-                    <form method="POST">
-                        <input type="" name="flight_id" value="{{ flight.id }}">
+                    <form method="POST" action="{{ url_for('book_ticket') }}">
+                        <input type="hidden" id="flight_id" name="flight_id" value="{{ flight.id }}">
+                        <input type="hidden" id="user_id" name="user_id" value="{{ user_id }}">
+                        <input type="hidden" id="user_name" name="user_name" value="{{ user_name }}">
+                        <input type="hidden" id="user_email" name="user_email" value="{{ user_email }}">
+                        <input type="hidden" id="flight_name" name="flight_name" value="{{ flight.flightName }}">
+                        <input type="hidden" id="flight_number" name="flight_number" value="{{ flight.flightNumber }}">
+                        <input type="hidden" id="origin" name="origin" value="{{ flight.origin }}">
+                        <input type="hidden" id="destination" name="destination" value="{{ flight.destination }}">
+                        <input type="hidden" id="flight_status" name="flight_status" value="{{ flight.flightStatus }}">
+                      <input type="hidden" id="ticket_status" name="ticket_status" value="active">
                         <button type="submit">Book Ticket</button>
                     </form>
                   </td>

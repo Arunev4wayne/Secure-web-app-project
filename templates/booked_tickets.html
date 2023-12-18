@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booked Flight Tickets</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h2>Booked Flight Tickets</h2>
+      <div class="container">
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Flight Name</th>
+                    <th>Flight Number</th>
+                    <th>Origin</th>
+                    <th>Destination</th>
+                    <th>Flight Status</th>
+                    <th>Ticket Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in tickets %}
+                    <tr>
+                        <td>{{ ticket.flight_name }}</td>
+                        <td>{{ ticket.flight_number }}</td>
+                        <td>{{ ticket.origin }}</td>
+                        <td>{{ ticket.destination }}</td>
+                        <td>{{ ticket.flight_status }}</td>
+                        <td>{{ ticket.ticket_status }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('cancel_ticket', ticket_id=ticket.id) }}">
+                                <input type="hidden" id="user_id" name="user_id" value="{{ user_id }}">
+                              <input type="hidden" id="ticket_status" name="ticket_status" value="Cancelled">
+                              
+                                <button type="submit" class="btn btn-danger">Cancel Ticket</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
