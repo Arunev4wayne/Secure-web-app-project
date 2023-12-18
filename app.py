@@ -5,9 +5,9 @@ app = Flask(__name__)
 app.secret_key = 'secretkey'
 
 db_config = {
-    'host': 'aws.connect.psdb.cloud',
-    'user': 'yyg7sar80ajo40rdx44l',
-    'password': 'pscale_pw_NtfWrHNH8yF0dxxssueZSQ0VoEpl7wBbDztIZLwpz8u',
+    'host': 'eu-west.connect.psdb.cloud',
+    'user': 'dsis161qa17e6ojjy41w',
+    'password': 'pscale_pw_7V9GBZruXMw8Kv2tZUtlStSdWMT3Vpz3osUthNCHVEp',
     'database': 'swd',
 }
 
