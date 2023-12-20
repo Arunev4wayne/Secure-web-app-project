@@ -1,16 +1,19 @@
 import mysql.connector
 from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from werkzeug.security import check_password_hash, generate_password_hash
 
 app = Flask(__name__)
 app.secret_key = 'secretkey'
 
 db_config = {
     'host': 'aws.connect.psdb.cloud',
-    'user': '1o829tv8uq12ymnpr7m2',
-    'password': 'pscale_pw_8RNpfH6BxRiBXYf9Vz0gdfqHMd1Bv7OQOBLRnAqgR2m',
+    'user': 'kh6yqggeug8mgofnhzdt',
+    'password': 'pscale_pw_CFGAlOZ59RdixfEJ74gGEHYu2KpmDpgnutoU9dfewzf',
     'database': 'swd',
 }
 
+def hash_password(password):
+  return generate_password_hash(password)
 
 def execute_query(query, values=None):
   # Connect to MySQL database
@@ -117,6 +120,7 @@ def user_signup():
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor()
 
+    password = hash_password(password)
     # Insert data into the admin table (replace 'admin' with your actual table name)
     insert_query = ("INSERT INTO users (username, password, email) "
                     "VALUES (%s, %s, %s)")
