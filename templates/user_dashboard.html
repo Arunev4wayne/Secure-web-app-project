@@ -33,6 +33,9 @@
   <div class="navbar">
     <a href="{{ url_for('update_profile', user_id=user_id) }}">Edit user Profile</a>
   </div>
+    <div class="navbar">
+      <a href="{{ url_for('user_logout') }}">Logout</a>
+    </div>
 
     <div class="container">
       <h1>Welcome to your dashboard, {{ user_name }}!</h1>

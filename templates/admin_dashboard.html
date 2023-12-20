@@ -4,6 +4,10 @@
     {% include 'bootstrap.html' %}
 </head>
 <body>
+  </div>
+  <div class="navbar">
+    <a href="{{ url_for('admin_logout') }}">Logout</a>
+  </div>
     <h1>Admin Dashboard</h1>
     <ul>
         <li><a href="/flight_ticket_management">Flight Ticket Management</a></li>

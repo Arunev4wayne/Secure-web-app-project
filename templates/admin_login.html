@@ -6,6 +6,18 @@
     <title>Admin Login</title>
 </head>
 <body>
+  <header>
+      <nav>
+          <ul>
+              <li><a href="#">Home</a></li>
+              <li><a href="#">Bookings</a></li>
+              <li><a href="#">About</a></li>
+              <li><a href="#">Contact</a></li>
+              <li><a href="{{ url_for('admin_login') }}">Admin</a></li>
+              <li><a href="{{ url_for('admin_signup') }}">Signup</a></li>
+          </ul>
+      </nav>
+  </header>
     <h2>Admin Login</h2>
     <form method="POST" action="{{ url_for('admin_login') }}">
         <label for="email">Email:</label>
@@ -16,5 +28,14 @@
 
         <input type="submit" value="Login">
     </form>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <script>
+        {% for category, message in messages %}
+          alert("{{ message }}");
+        {% endfor %}
+      </script>
+    {% endif %}
+  {% endwith %}
 </body>
 </html>

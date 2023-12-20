@@ -1,6 +1,21 @@
+import re
+from datetime import timedelta
+
 import mysql.connector
-from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask import (
+  Flask,
+  flash,
+  jsonify,
+  redirect,
+  render_template,
+  request,
+  session,
+  url_for,
+)
+from flask_login import LoginManager, UserMixin, current_user, logout_user
 from werkzeug.security import check_password_hash, generate_password_hash
+
+from flask_session import Session
 
 app = Flask(__name__)
 app.secret_key = 'secretkey'
@@ -12,9 +27,45 @@ db_config = {
     'database': 'swd',
 }
 
-def hash_password(password):
-  return generate_password_hash(password)
+password = 'password'
+hashed_password = generate_password_hash(password)
 
+
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+class User(UserMixin):
+  def __init__(self, user_id, username, email):
+      self.id = user_id
+      self.username = username
+      self.email = email
+
+# Assuming you have a function to load a user by ID from your database
+def load_user(user_id):
+  # Connect to your database and load a user by ID
+  # Return a User object if the user exists, or None if not found
+  connection = mysql.connector.connect(**db_config)
+  cursor = connection.cursor(dictionary=True)
+  select_query = "SELECT id, username, email FROM users WHERE id = %s"
+  cursor.execute(select_query, (user_id,))
+  result = cursor.fetchone()
+  cursor.close()
+  connection.close()
+
+  if result:
+      return User(result[0], result[1], result[2])
+  return None
+
+# Initialize Flask-Login
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+# Configure the user loader function
+@login_manager.user_loader
+def load_user_from_id(user_id):
+  return load_user(user_id)
+
+  
 def execute_query(query, values=None):
   # Connect to MySQL database
   connection = mysql.connector.connect(**db_config)
@@ -35,6 +86,20 @@ def execute_query(query, values=None):
 
   return result
 
+app.permanent_session_lifetime = timedelta(minutes=30)
+
+@app.before_request
+def before_request():
+    # Update session expiration time on each request
+    session.permanent = True
+
+
+app.config['SESSION_TYPE'] = 'filesystem'
+Session(app)
+
+def is_valid_phone_number(phone):
+# Simple check for a valid phone number format
+  return bool(re.match(r'^\d{10}$', phone))
 
 @app.route('/')
 def index():
@@ -43,102 +108,175 @@ def index():
 
 @app.route('/admin/signup', methods=['GET', 'POST'])
 def admin_signup():
-  if request.method == 'POST':
-    # Retrieve form data
-    username = request.form['username']
-    password = request.form['password']
-    email = request.form['email']
+    if request.method == 'POST':
+        # Retrieve form data
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
 
-    # Connect to MySQL database
-    connection = mysql.connector.connect(**db_config)
-    cursor = connection.cursor()
+        # Perform basic form validation
+        if not username or not password or not email:
+            flash('All fields are required', 'error')
+            return redirect(url_for('admin_signup'))
 
-    # Insert data into the admin table (replace 'admin' with your actual table name)
-    insert_query = ("INSERT INTO admin (name, password, email) "
-                    "VALUES (%s, %s, %s)")
-    values = (username, password, email)
+        # Check password strength
+        if not is_strong_password(password):
+            flash('Password should be strong, containing alphanumeric characters and symbols.', 'error')
+            return redirect(url_for('admin_signup'))
 
-    try:
-      cursor.execute(insert_query, values)
-      connection.commit()
-      cursor.close()
-      connection.close()
-      return redirect(url_for(
-          'admin_login.html'))  # Redirect to admin login page on success
-    except mysql.connector.Error as err:
-      print(f"Error: {err}")
-      connection.rollback()
-      return "Error occurred during registration."
+        hashed_password = generate_password_hash(password)
+        # Connect to MySQL database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
 
-  return render_template('admin_signup.html')
+        try:
+            # Check if the email is already registered
+            check_email_query = "SELECT id FROM admin WHERE email = %s"
+            cursor.execute(check_email_query, (email,))
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                flash('Email is already registered. Choose a different email.', 'error')
+                return redirect(url_for('admin_signup'))
+
+            # Insert data into the admin table
+            insert_query = ("INSERT INTO admin (name, password, email) "
+                            "VALUES (%s, %s, %s)")
+            values = (username, hashed_password, email)
+            cursor.execute(insert_query, values)
+            connection.commit()
+            cursor.close()
+            connection.close()
+
+            flash('Registration successful. You can now log in.', 'success')
+            return redirect(url_for('admin_login'))
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            connection.rollback()
+            flash('Error occurred during registration. Please try again.', 'error')
+
+    return render_template('admin_signup.html')
+
+
+def is_strong_password(password):
+    # Check if the password is strong (contains alphanumeric characters and symbols)
+    # Modify the regular expression pattern according to your specific requirements
+    pattern = re.compile(r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$')
+    return bool(pattern.match(password))
 
 
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-  if request.method == 'POST':
-    # Retrieve form data
-    email = request.form['email']
-    password = request.form['password']
+    if current_user.is_authenticated:
+    # If the user is already logged in, redirect to the admin dashboard
+      return redirect(url_for('admin_dashboard'))
+    if request.method == 'POST':
+        # Retrieve form data
+        email = request.form['email']
+        password = request.form['password']
 
-    # Connect to MySQL database
-    connection = mysql.connector.connect(**db_config)
-    cursor = connection.cursor()
+        # Connect to MySQL database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
 
-    # Check login credentials (replace 'admin' with your actual table name)
-    select_query = "SELECT * FROM admin WHERE email = %s AND password = %s"
-    values = (email, password)
+        # Check login credentials (replace 'admin' with your actual table name)
+        select_query = "SELECT name, id, email, password FROM admin WHERE email = %s"
+        values = (email,)
 
-    try:
-      cursor.execute(select_query, values)
-      result = cursor.fetchone()
+        try:
+            cursor.execute(select_query, values)
+            result = cursor.fetchone()
 
-      if result:
-        # Successful login, you may want to store user session here
-        cursor.close()
-        connection.close()
-        return redirect(url_for(
-            'admin_dashboard'))  # Redirect to admin dashboard page on success
-      else:
-        return "Invalid email or password."
+            if result:
+                stored_password = str(result[3])
+                if check_password_hash(stored_password, password):
+                    session['id'] = result[1]
+                    session['username'] = result[0]
+                    session['email'] = result[2]
+                    id = result[1]
+                    username = result[0]
+                    email = result[2]
+                    cursor.close()
+                    connection.close()
+                    flash('Login successful!', 'success')
+                    return redirect(url_for('admin_dashboard', id=id, username=username, email=email))
+                else:
+                    flash('Invalid email or password. Please try again.', 'error')
+                    return render_template('admin_login.html')
+            else:
+                flash('Invalid email or password. Please try again.', 'error')
+                return render_template('admin_login.html')
 
-    except mysql.connector.Error as err:
-      print(f"Error: {err}")
-      return "Error occurred during login."
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            flash('Error occurred during login. Please try again later.', 'error')
+            return render_template('admin_login.html')
 
-  return render_template('admin_login.html')
+    return render_template('admin_login.html')
 
+@app.route('/admin/logout')
+def admin_logout():
+    # Log the user out
+    logout_user()
+    return redirect(url_for('index'))
 
-@app.route('/index/signup', methods=['GET', 'POST'])
+@app.route('/user/signup', methods=['GET', 'POST'])
 def user_signup():
-  if request.method == 'POST':
-    # Retrieve form data
-    username = request.form['username']
-    password = request.form['password']
-    email = request.form['email']
+    if request.method == 'POST':
+        # Retrieve form data
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+        phone = request.form['phone']
 
-    # Connect to MySQL database
-    connection = mysql.connector.connect(**db_config)
-    cursor = connection.cursor()
+        # Perform basic form validation
+        if not username or not password or not email:
+            flash('All fields are required', 'error')
+            return redirect(url_for('index'))
 
-    password = hash_password(password)
-    # Insert data into the admin table (replace 'admin' with your actual table name)
-    insert_query = ("INSERT INTO users (username, password, email) "
-                    "VALUES (%s, %s, %s)")
-    values = (username, password, email)
+        # Check password strength
+        if not is_strong_password(password):
+            flash('Password should be strong, containing alphanumeric characters and symbols.', 'error')
+            return redirect(url_for('index'))
 
-    try:
-      cursor.execute(insert_query, values)
-      connection.commit()
-      cursor.close()
-      connection.close()
-      return redirect(
-          url_for('index'))  # Redirect to admin login page on success
-    except mysql.connector.Error as err:
-      print(f"Error: {err}")
-      connection.rollback()
-      return "Error occurred during registration."
+        if not phone or not is_valid_phone_number(phone):
+            flash('Please enter a valid phone number.', 'error')
+            return redirect(url_for('index'))
 
-  return render_template('index.html')
+        hashed_password = generate_password_hash(password)
+        # Connect to MySQL database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        try:
+            # Check if the email is already registered
+            check_email_query = "SELECT id FROM users WHERE email = %s"
+            cursor.execute(check_email_query, (email,))
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                flash('Email is already registered. Choose a different email.', 'error')
+                return redirect(url_for('index'))
+
+            # Insert data into the admin table
+            insert_query = ("INSERT INTO users (username, password, email, phone) "
+                            "VALUES (%s, %s, %s, %s)")
+            values = (username, hashed_password, email, phone)
+            cursor.execute(insert_query, values)
+            connection.commit()
+            cursor.close()
+            connection.close()
+
+            flash('Registration successful. You can now log in.', 'success')
+            return redirect(url_for('index'))
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            connection.rollback()
+            flash('Error occurred during registration. Please try again.', 'error')
+
+    return render_template('index.html')
+
+
 
 
 @app.route('/admin/add_user', methods=['GET', 'POST'])
@@ -152,11 +290,11 @@ def add_user():
     # Connect to MySQL database
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor()
-
+    hashed_password = generate_password_hash(password)
     # Insert data into the admin table (replace 'admin' with your actual table name)
     insert_query = ("INSERT INTO users (username, password, email) "
                     "VALUES (%s, %s, %s)")
-    values = (username, password, email)
+    values = (username, hashed_password, email)
 
     try:
       cursor.execute(insert_query, values)
@@ -219,17 +357,17 @@ def edit_user(id):
       print(f"Error: {err}")
       return "Database error occurred while retrieving flight details.", 500
   elif request.method == 'POST':
-    # Process form submission and update the flight details in the database
+      # Process form submission and update the flight details in the database
     username = request.form['username']
     email = request.form['email']
     phone = request.form['phone']
     password = request.form['password']
-
+    hashed_password = generate_password_hash(password)
     # Update the flight details in the database
     update_query = (
         "UPDATE users SET username=%s, email=%s, phone=%s, password=%s WHERE id=%s"
     )
-    values = (username, email, phone, password, id)
+    values = (username, email, phone, hashed_password, id)
 
     try:
       cursor.execute(update_query, values)
@@ -259,23 +397,26 @@ def user_login():
     cursor = connection.cursor()
 
     # Check login credentials (replace 'admin' with your actual table name)
-    select_query = "SELECT username, id, email FROM users WHERE email = %s AND password = %s"
-    values = (email, password)
+    select_query = "SELECT username, id, email, password FROM users WHERE email = %s"
+    values = (email,)
 
     try:
       cursor.execute(select_query, values)
       result = cursor.fetchone()
 
       if result:
-        session['id'] = result[1]
-        session['username'] = result[0]
-        session['email'] = result[2]
-        id = result[1]
-        username = result[0]
-        email = result[2]
-        cursor.close()
-        connection.close()
-        return redirect(url_for(
+        stored_password = str(result[3])
+        if check_password_hash(stored_password, password):
+         print("stored_password: ", stored_password)
+         session['id'] = result[1]
+         session['username'] = result[0]
+         session['email'] = result[2]
+         id = result[1]
+         username = result[0]
+         email = result[2]
+         cursor.close()
+         connection.close()
+         return redirect(url_for(
             'user_dashboard',id=id, username=username, email=email))  # Redirect to admin dashboard page on success
       else:
         return "Invalid email or password."
@@ -286,6 +427,11 @@ def user_login():
 
   return render_template('index.html')
 
+@app.route('/user/logout')
+def user_logout():
+    # Log the user out
+    logout_user()
+    return redirect(url_for('index'))
 
 @app.route('/get_user_details/<int:id>', methods=['GET'])
 def get_user_details(id):
@@ -611,10 +757,10 @@ def update_profile(user_id):
     username = request.form['username']
     email = request.form['email']
     password = request.form['password']
-
+    hashed_password = generate_password_hash(password)
     # Update the user status in the database
     update_query = "UPDATE users SET username=%s, email=%s, password=%s WHERE id=%s"
-    values = (username, email, password, user_id)
+    values = (username, email, hashed_password, user_id)
 
     try:
       cursor.execute(update_query, values)
