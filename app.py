@@ -40,10 +40,7 @@ class User(UserMixin):
       self.username = username
       self.email = email
 
-# Assuming you have a function to load a user by ID from your database
 def load_user(user_id):
-  # Connect to your database and load a user by ID
-  # Return a User object if the user exists, or None if not found
   connection = mysql.connector.connect(**db_config)
   cursor = connection.cursor(dictionary=True)
   select_query = "SELECT id, username, email FROM users WHERE id = %s"
@@ -56,7 +53,7 @@ def load_user(user_id):
       return User(result[0], result[1], result[2])
   return None
 
-# Initialize Flask-Login
+# Initialize Flask Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 
@@ -71,7 +68,7 @@ def execute_query(query, values=None):
   connection = mysql.connector.connect(**db_config)
   cursor = connection.cursor(
       dictionary=True
-  )  # Use dictionary=True to get results as a list of dictionaries
+  ) 
 
   # Execute the provided query and fetch all results
   if values:
@@ -88,6 +85,7 @@ def execute_query(query, values=None):
 
 app.permanent_session_lifetime = timedelta(minutes=30)
 
+
 @app.before_request
 def before_request():
     # Update session expiration time on each request
@@ -97,7 +95,7 @@ def before_request():
 app.config['SESSION_TYPE'] = 'filesystem'
 Session(app)
 
-def is_valid_phone_number(phone):
+def correct_phone_no(phone):
 # Simple check for a valid phone number format
   return bool(re.match(r'^\d{10}$', phone))
 
@@ -160,7 +158,6 @@ def admin_signup():
 
 def is_strong_password(password):
     # Check if the password is strong (contains alphanumeric characters and symbols)
-    # Modify the regular expression pattern according to your specific requirements
     pattern = re.compile(r'^(?=.*[a-zA-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$')
     return bool(pattern.match(password))
 
@@ -179,7 +176,6 @@ def admin_login():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
 
-        # Check login credentials (replace 'admin' with your actual table name)
         select_query = "SELECT name, id, email, password FROM admin WHERE email = %s"
         values = (email,)
 
@@ -218,6 +214,7 @@ def admin_login():
 def admin_logout():
     # Log the user out
     logout_user()
+    flash('Logged out successfully', 'success')
     return redirect(url_for('index'))
 
 @app.route('/user/signup', methods=['GET', 'POST'])
@@ -239,7 +236,7 @@ def user_signup():
             flash('Password should be strong, containing alphanumeric characters and symbols.', 'error')
             return redirect(url_for('index'))
 
-        if not phone or not is_valid_phone_number(phone):
+        if not phone or not correct_phone_no(phone):
             flash('Please enter a valid phone number.', 'error')
             return redirect(url_for('index'))
 
@@ -281,34 +278,59 @@ def user_signup():
 
 @app.route('/admin/add_user', methods=['GET', 'POST'])
 def add_user():
-  if request.method == 'POST':
-    # Retrieve form data
-    username = request.form['username']
-    password = request.form['password']
-    email = request.form['email']
+    if request.method == 'POST':
+        # Retrieve form data
+        username = request.form['username']
+        password = request.form['password']
+        email = request.form['email']
+        phone = request.form['phone']
 
-    # Connect to MySQL database
-    connection = mysql.connector.connect(**db_config)
-    cursor = connection.cursor()
-    hashed_password = generate_password_hash(password)
-    # Insert data into the admin table (replace 'admin' with your actual table name)
-    insert_query = ("INSERT INTO users (username, password, email) "
-                    "VALUES (%s, %s, %s)")
-    values = (username, hashed_password, email)
+        # Perform basic form validation
+        if not username or not password or not email:
+            flash('All fields are required', 'error')
+            return redirect(url_for('user_management'))
 
-    try:
-      cursor.execute(insert_query, values)
-      connection.commit()
-      cursor.close()
-      connection.close()
-      return redirect(url_for(
-          'user_management'))  # Redirect to admin login page on success
-    except mysql.connector.Error as err:
-      print(f"Error: {err}")
-      connection.rollback()
-      return "Error occurred during registration."
+        # Check password strength
+        if not is_strong_password(password):
+            flash('Password should be strong, containing alphanumeric characters and symbols.', 'error')
+            return redirect(url_for('user_management'))
 
-  return render_template('user_management.html')
+        if not phone or not is_valid_phone_number(phone):
+            flash('Please enter a valid phone number.', 'error')
+            return redirect(url_for('user_management'))
+
+        hashed_password = generate_password_hash(password)
+        # Connect to MySQL database
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+
+        try:
+            # Check if the email is already registered
+            check_email_query = "SELECT id FROM users WHERE email = %s"
+            cursor.execute(check_email_query, (email,))
+            existing_user = cursor.fetchone()
+
+            if existing_user:
+                flash('Email is already registered. Choose a different email.', 'error')
+                return redirect(url_for('user_management'))
+
+            # Insert data into the admin table
+            insert_query = ("INSERT INTO users (username, password, email, phone) "
+                            "VALUES (%s, %s, %s, %s)")
+            values = (username, hashed_password, email, phone)
+            cursor.execute(insert_query, values)
+            connection.commit()
+            cursor.close()
+            connection.close()
+
+            flash('Registration successful.', 'success')
+            return redirect(url_for('user_management'))
+        except mysql.connector.Error as err:
+            print(f"Error: {err}")
+            connection.rollback()
+            flash('Error occurred during registration. Please try again.', 'error')
+
+    return render_template('user_management.html')
 
 
 @app.route('/delete_user/<int:id>', methods=['GET', 'POST'])
@@ -325,8 +347,9 @@ def delete_user(id):
     connection.commit()
     cursor.close()
     connection.close()
+    flash('User deleted successfully.', 'success')
     return redirect(url_for('user_management')
-                    )  # Redirect to the flight management page on success
+                    )  
   except mysql.connector.Error as err:
     print(f"Error: {err}")
     connection.rollback()
@@ -340,7 +363,6 @@ def edit_user(id):
   cursor = connection.cursor(dictionary=True)
 
   if request.method == 'GET':
-    # Select the flight from the database by id to pre-populate the form
     try:
       cursor.execute("SELECT * FROM users WHERE id = %s", (id, ))
       user = cursor.fetchone()
@@ -348,6 +370,7 @@ def edit_user(id):
       connection.close()
 
       if user:
+        flash('user updated successfully', 'success')
         return render_template('user_update.html', user=user, id=id)
       else:
         return "User not found!", 404
@@ -374,14 +397,14 @@ def edit_user(id):
       connection.commit()
       cursor.close()
       connection.close()
+      flash('updated successfully', 'success')
       return redirect(url_for('user_management')
-                      )  # Redirect to the flight management page on success
+                      )  
     except mysql.connector.Error as err:
       print(f"Error: {err}")
       connection.rollback()
       return "Error occurred during user update."
 
-  # If not a POST request, simply display the page as a fallback.
   return render_template('user_management.html')
 
 
@@ -396,7 +419,6 @@ def user_login():
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor()
 
-    # Check login credentials (replace 'admin' with your actual table name)
     select_query = "SELECT username, id, email, password FROM users WHERE email = %s"
     values = (email,)
 
@@ -416,10 +438,12 @@ def user_login():
          email = result[2]
          cursor.close()
          connection.close()
+         flash('Login successfull', 'success') 
          return redirect(url_for(
-            'user_dashboard',id=id, username=username, email=email))  # Redirect to admin dashboard page on success
+            'user_dashboard',id=id, username=username, email=email)) 
       else:
-        return "Invalid email or password."
+        flash('Invalid email or password.', 'error')
+        return render_template('user_dashboard.html')
 
     except mysql.connector.Error as err:
       print(f"Error: {err}")
@@ -431,6 +455,7 @@ def user_login():
 def user_logout():
     # Log the user out
     logout_user()
+    flash('Logged out successfully', 'success')
     return redirect(url_for('index'))
 
 @app.route('/get_user_details/<int:id>', methods=['GET'])
@@ -438,7 +463,6 @@ def get_user_details(id):
   user_query = "SELECT * FROM users WHERE id = %s"
   user = execute_query(user_query, (id, ))
 
-  # Assuming only one result is expected
   if user:
     return jsonify(user[0])
   else:
@@ -472,7 +496,6 @@ def add_flight():
       cursor.close()
       connection.close()
       return "Flight number already exists."
-    # Insert data into the admin table (replace 'admin' with your actual table name)
     insert_query = (
         "INSERT INTO flights (flightName, flightNumber, origin, destination, flightStatus) "
         "VALUES (%s, %s, %s, %s, %s)")
@@ -483,8 +506,9 @@ def add_flight():
       connection.commit()
       cursor.close()
       connection.close()
+      flash('Flight details added successfully', 'success')
       return redirect(url_for('flight_ticket_management')
-                      )  # Redirect to admin login page on success
+                      )  
     except mysql.connector.Error as err:
       print(f"Error: {err}")
       connection.rollback()
@@ -533,10 +557,8 @@ def flight_display():
         cursor.close()
         connection.close()
 
-        # Render the template with the flights data
         return render_template('user_dashboard.html', flights=flights, user_id=user_id, user_name=user_name, user_email=user_email)
     else:
-        # Redirect to login if user ID is not in session
         return redirect(url_for('user_login'))
 
 @app.route('/user_dashboard/')
@@ -549,7 +571,6 @@ def ticket_display():
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor(dictionary=True)
 
-        # Query booked flight tickets for the user
         tickets_query = "SELECT * FROM ticket_bookings WHERE user_id = %s"
         cursor.execute(tickets_query, (user_id,))
         tickets = cursor.fetchall()
@@ -558,10 +579,8 @@ def ticket_display():
         cursor.close()
         connection.close()
 
-        # Render the template with the booked flight tickets data
         return render_template('booked_tickets.html', tickets=tickets, user_id=user_id)
     else:
-        # Redirect to login if user ID is not in session
         return redirect(url_for('user_login'))
 
 
@@ -572,7 +591,6 @@ def update_flight(id):
   cursor = connection.cursor(dictionary=True)
 
   if request.method == 'GET':
-    # Select the flight from the database by id to pre-populate the form
     try:
       cursor.execute("SELECT * FROM flights WHERE id = %s", (id, ))
       flight = cursor.fetchone()
@@ -589,7 +607,6 @@ def update_flight(id):
       print(f"Error: {err}")
       return "Database error occurred while retrieving flight details.", 500
   elif request.method == 'POST':
-    # Process form submission and update the flight details in the database
     flight_name = request.form['flightName']
     flight_number = request.form['flightNumber']
     origin = request.form['origin']
@@ -608,6 +625,7 @@ def update_flight(id):
       connection.commit()
       cursor.close()
       connection.close()
+      flash('Flight details updated successfully!', 'success')
       return redirect(url_for('flight_ticket_management')
                       )  # Redirect to the flight management page on success
     except mysql.connector.Error as err:
@@ -615,7 +633,6 @@ def update_flight(id):
       connection.rollback()
       return "Error occurred during flight update."
 
-  # If not a POST request, simply display the page as a fallback.
   return render_template('flight_update.html')
 
 
@@ -633,6 +650,7 @@ def delete_flight(id):
     connection.commit()
     cursor.close()
     connection.close()
+    flash('Flight deleted successfully!', 'success')
     return redirect(url_for('flight_ticket_management')
                     )  # Redirect to the flight management page on success
   except mysql.connector.Error as err:
@@ -659,7 +677,6 @@ def book_ticket():
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor()
 
-    # Insert data into the admin table (replace 'admin' with your actual table name)
     insert_query = ("INSERT INTO ticket_bookings (user_id, user_name, user_email, flight_id, flight_name, flight_number, origin, destination, flight_status, ticket_status) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
     values = (user_id, user_name, user_email, flight_id, flight_name, flight_number, flight_origin, flight_destination, flight_status, ticket_status)
@@ -670,6 +687,7 @@ def book_ticket():
       connection.commit()
       cursor.close()
       connection.close()
+      flash('Ticket booked successfully!', 'success')
       return redirect(url_for(
           'user_dashboard'))  # Redirect to admin login page on success
     except mysql.connector.Error as err:
@@ -687,7 +705,6 @@ def cancel_ticket(ticket_id):
   cursor = connection.cursor(dictionary=True)
 
   if request.method == 'POST':
-    # Process form submission and update the ticket status in the database
     ticket_status = request.form['ticket_status']
 
     # Update the ticket status in the database
@@ -697,11 +714,11 @@ def cancel_ticket(ticket_id):
     values = (ticket_status, ticket_id,)  # Ensure the values are passed as a tuple
 
     try:
-      # Pass the 'values' as a second argument which represents parameters for the placeholder in 'update_query'
       cursor.execute(update_query, values)
       connection.commit()
       cursor.close()
       connection.close()
+      flash('Ticket cancelled successfully!', 'success')
       return redirect(url_for('booked_tickets', user_id=session['id']))
     except mysql.connector.Error as err:
       print(f"Error: {err}")
@@ -710,7 +727,6 @@ def cancel_ticket(ticket_id):
       connection.close()
       return "Error occurred during cancellation."
 
-  # If not a POST request or if the ticket is not found, redirect to the booked tickets view
   return redirect(url_for('booked_tickets', user_id=session['id']))
 
 @app.route('/admin/booked_tickets/<int:ticket_id>', methods=['GET', 'POST'])
@@ -720,7 +736,6 @@ def admin_cancel_ticket(ticket_id):
   cursor = connection.cursor(dictionary=True)
 
   if request.method == 'POST':
-    # Process form submission and update the ticket status in the database
     ticket_status = request.form['ticket_status']
 
     # Update the ticket status in the database
@@ -730,11 +745,12 @@ def admin_cancel_ticket(ticket_id):
     values = (ticket_status, ticket_id,)  # Ensure the values are passed as a tuple
 
     try:
-      # Pass the 'values' as a second argument which represents parameters for the placeholder in 'update_query'
+
       cursor.execute(update_query, values)
       connection.commit()
       cursor.close()
       connection.close()
+      flash('Ticket cancelled successfully!', 'success')
       return redirect(url_for('booked_tickets_admin'))
     except mysql.connector.Error as err:
       print(f"Error: {err}")
@@ -743,7 +759,6 @@ def admin_cancel_ticket(ticket_id):
       connection.close()
       return "Error occurred during cancellation."
 
-  # If not a POST request or if the ticket is not found, redirect to the booked tickets view
   return redirect(url_for('booked_tickets_admin'))
 
 @app.route('/user/update_profile/<int:user_id>', methods=['GET', 'POST'])
@@ -753,12 +768,11 @@ def update_profile(user_id):
   cursor = connection.cursor(dictionary=True)
 
   if request.method == 'POST':
-    # Process form submission and update the user status in the database
+
     username = request.form['username']
     email = request.form['email']
     password = request.form['password']
     hashed_password = generate_password_hash(password)
-    # Update the user status in the database
     update_query = "UPDATE users SET username=%s, email=%s, password=%s WHERE id=%s"
     values = (username, email, hashed_password, user_id)
 
@@ -771,7 +785,7 @@ def update_profile(user_id):
     finally:
       cursor.close()
       connection.close()
-
+    flash('Profile updated successfully!', 'success')
     return redirect(url_for('user_dashboard'))
   else:
     # Render user details for GET request
@@ -781,6 +795,7 @@ def update_profile(user_id):
     connection.close()
 
     if user:
+      
       return render_template('update_profile.html', user=user, user_id=user_id)
     else:
       return "User not found", 404

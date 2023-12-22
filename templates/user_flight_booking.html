@@ -11,7 +11,7 @@
 <h1>Flight Booking {% for user in users %} {{ user.id }}</h1>
 
 
-<!-- Flight Information Table -->
+<!-- Flight Details -->
   <table border="1" id="flightTable">
       <tr>
           <th>ID</th>
@@ -22,7 +22,6 @@
           <th>Flight Status</th>
           <th>Action</th>
       </tr>
-      <!-- Example row with buttons -->
     {% for flight in flights %}
             <tr>
                 <td>{{ flight.id }}</td>
@@ -39,8 +38,16 @@
     </table>
     <script>
     function redirectToUpdatePage() {
-        // Your update logic goes here
     }
     </script>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <script>
+        {% for category, message in messages %}
+          alert("{{ message }}");
+        {% endfor %}
+      </script>
+    {% endif %}
+  {% endwith %}
 </body>
 </html>

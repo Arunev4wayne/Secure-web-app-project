@@ -33,7 +33,7 @@
 <!-- Flight Information Table -->
   <table border="1" id="flightTable">
       <tr>
-          <th>ID</th>
+
           <th>Flight Name</th>
           <th>Flight Number</th>
           <th>Origin</th>
@@ -41,10 +41,9 @@
           <th>Flight Status</th>
           <th>Action</th>
       </tr>
-      <!-- Example row with buttons -->
     {% for flight in flights %}
             <tr>
-                <td>{{ flight.id }}</td>
+
                 <td>{{ flight.flightName }}</td>
                 <td>{{ flight.flightNumber }}</td>
                 <td>{{ flight.origin }}</td>
@@ -60,8 +59,16 @@
     </table>
     <script>
     function redirectToUpdatePage() {
-        // Your update logic goes here
     }
     </script>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <script>
+        {% for category, message in messages %}
+          alert("{{ message }}");
+        {% endfor %}
+      </script>
+    {% endif %}
+  {% endwith %}
 </body>
 </html>

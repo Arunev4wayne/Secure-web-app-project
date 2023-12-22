@@ -27,11 +27,18 @@
     <label for="status">Flight Status:</label>
     <input type="text" id="status" name="status" value="{{ flight.flightStatus }}" required><br>
 
-    <!-- Click the button to update the flight details -->
     <button type="submit">Update Flight</button>
 </form>
 
-<!-- JavaScript functions or additional logic can be added as needed -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <script>
+        {% for category, message in messages %}
+          alert("{{ message }}");
+        {% endfor %}
+      </script>
+    {% endif %}
+  {% endwith %}
 
 </body>
 </html>

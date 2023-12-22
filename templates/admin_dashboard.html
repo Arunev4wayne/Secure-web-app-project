@@ -14,7 +14,14 @@
         <li><a href="/user_management">User Management</a></li>
         <li><a href="/booked_tickets_admin">View and Manage All Ticket Bookings</a></li>
     </ul>
-    <!-- Include the Flight Ticket Management code here -->
-    <!-- Include the User Management code here -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <script>
+        {% for category, message in messages %}
+          alert("{{ message }}");
+        {% endfor %}
+      </script>
+    {% endif %}
+  {% endwith %}
 </body>
 </html>

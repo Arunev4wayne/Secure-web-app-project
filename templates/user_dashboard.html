@@ -38,11 +38,10 @@
     </div>
 
     <div class="container">
-      <h1>Welcome to your dashboard, {{ user_name }}!</h1>
+      <h1></h1>
         <h2>User Dashboard</h2>
         <h3>Book Flight Ticket</h3>
         <form method="POST">
-            <!-- include your book flight form code here -->
         </form>
       <div class="navbar">
           <a href="{{ url_for('booked_tickets', user_id=user_id) }}">Check Booked Flights</a>
@@ -57,7 +56,6 @@
             <th>Flight Status</th>
             <th>Action</th>
         </tr>
-        <!-- Example row with buttons -->
       {% for flight in flights %}
               <tr>
                   <td>{{ flight.id }}</td>
@@ -85,5 +83,14 @@
           {% endfor %}
       </table>
     </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <script>
+          {% for category, message in messages %}
+            alert("{{ message }}");
+          {% endfor %}
+        </script>
+      {% endif %}
+    {% endwith %}
 </body>
 </html>
